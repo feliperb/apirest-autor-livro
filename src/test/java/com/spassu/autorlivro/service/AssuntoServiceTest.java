@@ -122,7 +122,7 @@ class AssuntoServiceTest {
     @Test
     void delete_deveLancarBusinessExceptionSeAssuntoTemLivros() {
         Assunto a = new Assunto(); a.setId(1L);
-        a.setLivros(Set.of(new Livro())); // simulando livro associado
+        a.setLivros(Arrays.asList(new Livro())); // simulando livro associado
 
         when(assuntoRepository.findById(1L)).thenReturn(Optional.of(a));
 

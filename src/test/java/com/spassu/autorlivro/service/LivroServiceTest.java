@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,8 +69,8 @@ class LivroServiceTest {
         l.setEditora("Editora X");
         l.setEdicao(1);
         l.setAnoPublicacao("2023");
-        l.setAutores(Set.of(new Autor()));
-        l.setAssuntos(Set.of(new Assunto()));
+        l.setAutores(Arrays.asList(new Autor()));
+        l.setAssuntos(Arrays.asList(new Assunto()));
 
         when(livroRepository.save(any(Livro.class))).thenAnswer(i -> {
             Livro saved = i.getArgument(0);
