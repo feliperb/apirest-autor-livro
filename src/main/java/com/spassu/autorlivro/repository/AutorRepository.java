@@ -7,6 +7,8 @@ import com.spassu.autorlivro.model.Autor;
 
 @Repository
 public interface AutorRepository extends JpaRepository<Autor, Long> {
-    
-    // Optional<Autor> findByNome(String nome);
+
+    boolean existsByNomeIgnoreCase(String nome);
+
+    boolean existsByNomeIgnoreCaseAndIdNot(String nome, Long id);
 }

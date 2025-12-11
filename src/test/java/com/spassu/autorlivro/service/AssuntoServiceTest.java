@@ -11,13 +11,14 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.spassu.autorlivro.dto.AssuntoRecordDto;
 import com.spassu.autorlivro.exception.BusinessException;
 import com.spassu.autorlivro.exception.NotFoundException;
+import com.spassu.autorlivro.mapper.AssuntoMapper;
 import com.spassu.autorlivro.model.Assunto;
 import com.spassu.autorlivro.model.Livro;
 import com.spassu.autorlivro.repository.AssuntoRepository;
@@ -25,18 +26,20 @@ import com.spassu.autorlivro.repository.AssuntoRepository;
 class AssuntoServiceTest {
 
     private AssuntoRepository assuntoRepository;
+    private AssuntoMapper mapper;
     private AssuntoService assuntoService;
 
     @BeforeEach
     void setUp() {
         assuntoRepository = mock(AssuntoRepository.class);
-        assuntoService = new AssuntoService(assuntoRepository);
+        mapper = new AssuntoMapper();
+        assuntoService = new AssuntoService(assuntoRepository, mapper);
     }
 
     @Test
     void findAll_deveRetornarTodosAssuntos() {
-        Assunto a1 = new Assunto(); a1.setId(1L); a1.setDescricao("Assunto 1");
-        Assunto a2 = new Assunto(); a2.setId(2L); a2.setDescricao("Assunto 2");
+        Assunto a1 = Assunto.builder().id(1L).descricao("Assunto 1").build();
+        Assunto a2 = Assunto.builder().id(2L).descricao("Assunto 2").build();
 
         when(assuntoRepository.findAll()).thenReturn(Arrays.asList(a1, a2));
 
@@ -46,7 +49,7 @@ class AssuntoServiceTest {
 
     @Test
     void findById_deveRetornarAssuntoExistente() {
-        Assunto a = new Assunto(); a.setId(1L); a.setDescricao("Assunto 1");
+        Assunto a = Assunto.builder().id(1L).descricao("Assunto 1").build();
         when(assuntoRepository.findById(1L)).thenReturn(Optional.of(a));
 
         Assunto result = assuntoService.findById(1L);
@@ -63,71 +66,75 @@ class AssuntoServiceTest {
     }
 
     @Test
-    void save_deveSalvarAssuntoValido() {
-        Assunto a = new Assunto(); a.setDescricao("Novo Assunto");
+    void create_deveSalvarAssuntoValido() {
+        AssuntoRecordDto dto = new AssuntoRecordDto("Novo Assunto");
 
-        when(assuntoRepository.save(any(Assunto.class))).thenAnswer(i -> {
-            Assunto saved = i.getArgument(0);
+        when(assuntoRepository.save(any(Assunto.class))).thenAnswer(inv -> {
+            Assunto saved = inv.getArgument(0);
             saved.setId(1L);
             return saved;
         });
 
-        Assunto result = assuntoService.save(a);
+        Assunto result = assuntoService.create(dto);
+
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getDescricao()).isEqualTo("Novo Assunto");
     }
 
     @Test
-    void save_deveLancarBusinessExceptionParaDescricaoVazia() {
-        Assunto a = new Assunto(); a.setDescricao("  ");
+    void create_deveLancarBusinessExceptionParaDescricaoVazia() {
+        AssuntoRecordDto dto = new AssuntoRecordDto("   ");
 
-        assertThatThrownBy(() -> assuntoService.save(a))
+        assertThatThrownBy(() -> assuntoService.create(dto))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Descrição do assunto não pode ser vazia");
     }
 
     @Test
     void update_deveAtualizarAssuntoExistente() {
-        Assunto existente = new Assunto(); existente.setId(1L); existente.setDescricao("Antigo");
-        when(assuntoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(assuntoRepository.save(any(Assunto.class))).thenAnswer(i -> i.getArgument(0));
+        Assunto existente = Assunto.builder().id(1L).descricao("Antigo").build();
 
-        Assunto atualizado = new Assunto(); atualizado.setDescricao("Atualizado");
-        Assunto result = assuntoService.update(1L, atualizado);
+        when(assuntoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(assuntoRepository.save(any(Assunto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AssuntoRecordDto dto = new AssuntoRecordDto("Atualizado");
+
+        Assunto result = assuntoService.update(1L, dto);
 
         assertThat(result.getDescricao()).isEqualTo("Atualizado");
     }
 
     @Test
     void update_deveLancarBusinessExceptionParaDescricaoVazia() {
-        Assunto existente = new Assunto(); existente.setId(1L); existente.setDescricao("Assunto 1");
+        Assunto existente = Assunto.builder().id(1L).descricao("Assunto 1").build();
+
         when(assuntoRepository.findById(1L)).thenReturn(Optional.of(existente));
 
-        Assunto atualizado = new Assunto(); atualizado.setDescricao("");
+        AssuntoRecordDto dto = new AssuntoRecordDto("");
 
-        assertThatThrownBy(() -> assuntoService.update(1L, atualizado))
+        assertThatThrownBy(() -> assuntoService.update(1L, dto))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Descrição do assunto não pode ser vazia");
     }
 
     @Test
     void delete_deveRemoverAssuntoSemLivros() {
-        Assunto a = new Assunto(); a.setId(1L);
+        Assunto a = Assunto.builder().id(1L).livros(List.of()).build();
         when(assuntoRepository.findById(1L)).thenReturn(Optional.of(a));
 
         assuntoService.delete(1L);
+
         verify(assuntoRepository, times(1)).delete(a);
     }
 
     @Test
     void delete_deveLancarBusinessExceptionSeAssuntoTemLivros() {
-        Assunto a = new Assunto(); a.setId(1L);
-        a.setLivros(Arrays.asList(new Livro())); // simulando livro associado
+        Assunto a = Assunto.builder().id(1L).livros(List.of(new Livro())).build();
 
         when(assuntoRepository.findById(1L)).thenReturn(Optional.of(a));
 
         assertThatThrownBy(() -> assuntoService.delete(1L))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Não é possível deletar um assunto");
+                .hasMessageContaining("Não é possível deletar um assunto que possui livros associados");
     }
 }

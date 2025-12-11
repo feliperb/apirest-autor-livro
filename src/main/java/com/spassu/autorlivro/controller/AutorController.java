@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.spassu.autorlivro.dto.AutorRecordDto;
+import com.spassu.autorlivro.dto.AutorRecordDto.AutorView;
 import com.spassu.autorlivro.model.Autor;
 import com.spassu.autorlivro.service.AutorService;
 
@@ -26,25 +29,42 @@ public class AutorController {
     private final AutorService autorService;
 
     @GetMapping
-    public ResponseEntity<List<Autor>> getAll() {
+    public ResponseEntity<List<AutorRecordDto>> getAll() {
         return ResponseEntity.ok(autorService.findAll());
     }
 
+    
     @GetMapping("/{id}")
-    public ResponseEntity<Autor> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(autorService.findById(id));
+    public ResponseEntity<AutorRecordDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(autorService.findByIdDto(id));
     }
 
+    
     @PostMapping
-    public ResponseEntity<Autor> create(@Valid @RequestBody Autor autor) {
-        return ResponseEntity.status(201).body(autorService.save(autor));
+    public ResponseEntity<AutorRecordDto> create(
+            @Valid
+            @RequestBody
+            @JsonView(AutorView.Create.class)
+            AutorRecordDto dto
+    ) {
+    	AutorRecordDto novoAutor = autorService.create(dto);
+        return ResponseEntity.status(201).body(novoAutor);
     }
 
+    
     @PutMapping("/{id}")
-    public ResponseEntity<Autor> update(@PathVariable Long id, @Valid @RequestBody Autor autor) {
-        return ResponseEntity.ok(autorService.update(id, autor));
+    public ResponseEntity<AutorRecordDto> update(
+            @PathVariable Long id,
+            @Valid
+            @RequestBody
+            @JsonView(AutorView.Update.class)
+            AutorRecordDto dto
+    ) {
+    	AutorRecordDto autorAtualizado = autorService.update(id, dto);
+        return ResponseEntity.ok(autorAtualizado);
     }
 
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         autorService.delete(id);

@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.spassu.autorlivro.model.Livro;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.spassu.autorlivro.dto.LivroRecordDto;
+import com.spassu.autorlivro.dto.LivroRecordDto.BookView;
 import com.spassu.autorlivro.service.LivroService;
 
 import jakarta.validation.Valid;
@@ -26,25 +28,31 @@ public class LivroController {
     private final LivroService livroService;
 
     @GetMapping
-    public ResponseEntity<List<Livro>> getAll() {
+    public ResponseEntity<List<LivroRecordDto>> getAll() {
         return ResponseEntity.ok(livroService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Livro> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(livroService.findById(id));
+    public ResponseEntity<LivroRecordDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(livroService.findByIdDto(id));
     }
 
     @PostMapping
-    public ResponseEntity<Livro> create(@Valid @RequestBody Livro livro) {
-        return ResponseEntity.status(201).body(livroService.save(livro));
+    public ResponseEntity<LivroRecordDto> create(
+            @Valid @JsonView(BookView.Create.class) @RequestBody LivroRecordDto dto
+    ) {
+        LivroRecordDto salvo = livroService.create(dto);
+        return ResponseEntity.status(201).body(salvo);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Livro> update(@PathVariable Long id, @Valid @RequestBody Livro livro) {
-        return ResponseEntity.ok(livroService.update(id, livro));
+    public ResponseEntity<LivroRecordDto> update(
+            @PathVariable Long id,
+            @Valid @JsonView(BookView.Update.class) @RequestBody LivroRecordDto dto
+    ) {
+        LivroRecordDto atualizado = livroService.update(id, dto);
+        return ResponseEntity.ok(atualizado);
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

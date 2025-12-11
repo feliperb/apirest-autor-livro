@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -15,126 +16,195 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.spassu.autorlivro.dto.AutorRecordDto;
 import com.spassu.autorlivro.exception.BusinessException;
 import com.spassu.autorlivro.exception.NotFoundException;
+import com.spassu.autorlivro.mapper.AutorMapper;
 import com.spassu.autorlivro.model.Autor;
 import com.spassu.autorlivro.model.Livro;
 import com.spassu.autorlivro.repository.AutorRepository;
 
 public class AutorServiceTest {
 
-	private AutorRepository autorRepository;
+    private AutorRepository autorRepository;
     private AutorService autorService;
-    
+    private AutorMapper autorMapper;
+
     @BeforeEach
     void setUp() {
         autorRepository = mock(AutorRepository.class);
-        autorService = new AutorService(autorRepository);
+        autorMapper = mock(AutorMapper.class);
+        autorService = new AutorService(autorRepository, autorMapper);
     }
-    
+
+    // --- findAll / findByIdDto ---
+
     @Test
-    void findAll_deveRetornarTodosAutores() {
-        Autor a1 = new Autor(); a1.setId(1L); a1.setNome("Autor 1");
-        Autor a2 = new Autor(); a2.setId(2L); a2.setNome("Autor 2");
+    void findAll_deveRetornarTodosAutoresComoDto() {
+        Autor a1 = Autor.builder().id(1L).nome("Autor 1").livros(new ArrayList<>()).build();
+        Autor a2 = Autor.builder().id(2L).nome("Autor 2").livros(new ArrayList<>()).build();
 
         when(autorRepository.findAll()).thenReturn(Arrays.asList(a1, a2));
+        when(autorMapper.toDto(a1)).thenReturn(new AutorRecordDto(1L, "Autor 1"));
+        when(autorMapper.toDto(a2)).thenReturn(new AutorRecordDto(1L, "Autor 2"));
 
-        List<Autor> result = autorService.findAll();
-        assertThat(result).hasSize(2).containsExactly(a1, a2);
+        List<AutorRecordDto> result = autorService.findAll();
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).nome()).isEqualTo("Autor 1");
+        assertThat(result.get(1).nome()).isEqualTo("Autor 2");
     }
+
     @Test
-    void findById_deveRetornarAutorExistente() {
-        Autor a = new Autor(); a.setId(1L); a.setNome("Autor 1");
+    void findByIdDto_deveRetornarAutorComoDto() {
+        Autor a = Autor.builder().id(1L).nome("Autor 1").livros(new ArrayList<>()).build();
         when(autorRepository.findById(1L)).thenReturn(Optional.of(a));
+        when(autorMapper.toDto(a)).thenReturn(new AutorRecordDto(1L, "Autor 1"));
 
-        Autor result = autorService.findById(1L);
-        assertThat(result.getNome()).isEqualTo("Autor 1");
+        AutorRecordDto result = autorService.findByIdDto(1L);
+        assertThat(result.nome()).isEqualTo("Autor 1");
     }
 
     @Test
-    void findById_deveLancarNotFoundExceptionSeNaoExistir() {
+    void findByIdDto_deveLancarNotFoundExceptionSeNaoExistir() {
         when(autorRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> autorService.findById(1L))
+        assertThatThrownBy(() -> autorService.findByIdDto(1L))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("Autor não encontrado");
     }
 
     @Test
-    void save_deveSalvarAutorValido() {
-        Autor a = new Autor(); a.setNome("Novo Autor");
-
-        when(autorRepository.findAll()).thenReturn(List.of());
-        when(autorRepository.save(any(Autor.class))).thenAnswer(i -> {
-            Autor saved = i.getArgument(0);
-            saved.setId(1L);
-            return saved;
-        });
-
-        Autor result = autorService.save(a);
-        assertThat(result.getId()).isEqualTo(1L);
-        assertThat(result.getNome()).isEqualTo("Novo Autor");
-    }
-
-    @Test
-    void save_deveLancarBusinessExceptionParaNomeDuplicado() {
-        Autor existente = new Autor(); existente.setId(1L); existente.setNome("Autor 1");
-        when(autorRepository.findAll()).thenReturn(List.of(existente));
-
-        Autor novo = new Autor(); novo.setNome("Autor 1");
-
-        assertThatThrownBy(() -> autorService.save(novo))
+    void findByIdDto_deveLancarBusinessExceptionParaIdNulo() {
+        assertThatThrownBy(() -> autorService.findByIdDto(null))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Já existe um autor com o mesmo nome");
+                .hasMessageContaining("O ID do autor não pode ser nulo");
+    }
+
+    // --- create ---
+
+    @Test
+    void create_deveSalvarAutorValidoComoDto() {
+        AutorRecordDto dto = new AutorRecordDto(1L, "Novo Autor");
+        Autor autorSalvo = Autor.builder().id(1L).nome("Novo Autor").build();
+
+        when(autorRepository.existsByNomeIgnoreCase("Novo Autor")).thenReturn(false);
+        when(autorRepository.save(any(Autor.class))).thenReturn(autorSalvo);
+        when(autorMapper.toDto(autorSalvo)).thenReturn(new AutorRecordDto(1L, "Novo Autor"));
+
+        AutorRecordDto result = autorService.create(dto);
+
+        assertThat(result.nome()).isEqualTo("Novo Autor");
     }
 
     @Test
-    void update_deveAtualizarAutorExistente() {
-        Autor existente = new Autor(); existente.setId(1L); existente.setNome("Autor 1");
+    void create_deveLancarBusinessExceptionParaNomeDuplicado() {
+        AutorRecordDto dto = new AutorRecordDto(1L, "Autor 1");
+
+        when(autorRepository.existsByNomeIgnoreCase("Autor 1")).thenReturn(true);
+
+        assertThatThrownBy(() -> autorService.create(dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Já existe um autor com esse nome.");
+    }
+
+    @Test
+    void create_deveLancarBusinessExceptionParaDtoNulo() {
+        assertThatThrownBy(() -> autorService.create(null))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("O nome do autor não pode ser vazio");
+    }
+
+    @Test
+    void create_deveLancarBusinessExceptionParaNomeVazio() {
+        AutorRecordDto dto = new AutorRecordDto(1L, "  ");
+        assertThatThrownBy(() -> autorService.create(dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("O nome do autor não pode ser vazio");
+    }
+
+    // --- update ---
+
+    @Test
+    void update_deveAtualizarAutorExistenteComoDto() {
+        Autor existente = Autor.builder().id(1L).nome("Autor 1").livros(new ArrayList<>()).build();
+        AutorRecordDto dto = new AutorRecordDto(1L, "Autor Atualizado");
+        Autor atualizado = Autor.builder().id(1L).nome("Autor Atualizado").build();
+
         when(autorRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(autorRepository.findAll()).thenReturn(List.of(existente));
-        when(autorRepository.save(any(Autor.class))).thenAnswer(i -> i.getArgument(0));
+        when(autorRepository.existsByNomeIgnoreCaseAndIdNot("Autor Atualizado", 1L)).thenReturn(false);
+        when(autorRepository.save(any(Autor.class))).thenReturn(atualizado);
+        when(autorMapper.toDto(atualizado)).thenReturn(new AutorRecordDto(1L, "Autor Atualizado"));
 
-        Autor atualizado = new Autor(); atualizado.setNome("Autor Atualizado");
-        Autor result = autorService.update(1L, atualizado);
-
-        assertThat(result.getNome()).isEqualTo("Autor Atualizado");
+        AutorRecordDto result = autorService.update(1L, dto);
+        assertThat(result.nome()).isEqualTo("Autor Atualizado");
     }
 
     @Test
     void update_deveLancarBusinessExceptionParaNomeDuplicado() {
-        Autor a1 = new Autor(); a1.setId(1L); a1.setNome("Autor 1");
-        Autor a2 = new Autor(); a2.setId(2L); a2.setNome("Autor 2");
+        AutorRecordDto dto = new AutorRecordDto(1L, "Autor 2");
+        Long id = 1L;
 
-        when(autorRepository.findById(1L)).thenReturn(Optional.of(a1));
-        when(autorRepository.findAll()).thenReturn(List.of(a1, a2));
+        Autor existente = Autor.builder().id(id).nome("Autor 1").build();
+        when(autorRepository.findById(id)).thenReturn(Optional.of(existente));
+        when(autorRepository.existsByNomeIgnoreCaseAndIdNot("Autor 2", id)).thenReturn(true);
 
-        Autor atualizado = new Autor(); atualizado.setNome("Autor 2");
-
-        assertThatThrownBy(() -> autorService.update(1L, atualizado))
+        assertThatThrownBy(() -> autorService.update(id, dto))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Já existe outro autor com o mesmo nome");
+                .hasMessageContaining("Já existe outro autor com esse nome.");
     }
 
     @Test
-    void delete_deveRemoverAutorSemLivros() {
-        Autor a = new Autor(); a.setId(1L); a.setNome("Autor 1");
+    void update_deveLancarBusinessExceptionParaIdNulo() {
+        AutorRecordDto dto = new AutorRecordDto(1L, "Autor X");
+        assertThatThrownBy(() -> autorService.update(null, dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("O ID do autor não pode ser nulo");
+    }
 
+    @Test
+    void update_deveLancarBusinessExceptionParaDtoNulo() {
+        assertThatThrownBy(() -> autorService.update(1L, null))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("O nome do autor não pode ser vazio");
+    }
+
+    @Test
+    void update_deveLancarBusinessExceptionParaNomeVazio() {
+        Autor existente = Autor.builder().id(1L).nome("Autor 1").build();
+        when(autorRepository.findById(1L)).thenReturn(Optional.of(existente));
+
+        AutorRecordDto dto = new AutorRecordDto(1L, "  ");
+        assertThatThrownBy(() -> autorService.update(1L, dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("O nome do autor não pode ser vazio");
+    }
+
+    // --- delete ---
+
+    @Test
+    void delete_deveRemoverAutorSemLivros() {
+        Autor a = Autor.builder().id(1L).nome("Autor 1").livros(new ArrayList<>()).build();
         when(autorRepository.findById(1L)).thenReturn(Optional.of(a));
 
         autorService.delete(1L);
+
         verify(autorRepository, times(1)).delete(a);
     }
 
     @Test
     void delete_deveLancarBusinessExceptionSeAutorTemLivros() {
-        Autor a = new Autor(); a.setId(1L); a.setNome("Autor 1");
-        a.getLivros().add(new Livro()); // simulando livro associado
-
+        Autor a = Autor.builder().id(1L).nome("Autor 1").livros(List.of(new Livro())).build();
         when(autorRepository.findById(1L)).thenReturn(Optional.of(a));
 
         assertThatThrownBy(() -> autorService.delete(1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Não é possível deletar um autor");
+    }
+
+    @Test
+    void delete_deveLancarBusinessExceptionParaIdNulo() {
+        assertThatThrownBy(() -> autorService.delete(null))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("O ID do autor não pode ser nulo");
     }
 }

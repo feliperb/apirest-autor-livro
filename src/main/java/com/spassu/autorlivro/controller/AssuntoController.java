@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.spassu.autorlivro.dto.AssuntoRecordDto;
+import com.spassu.autorlivro.dto.AssuntoRecordDto.AssuntoView;
 import com.spassu.autorlivro.model.Assunto;
 import com.spassu.autorlivro.service.AssuntoService;
 
@@ -36,15 +39,19 @@ public class AssuntoController {
     }
 
     @PostMapping
-    public ResponseEntity<Assunto> create(@Valid @RequestBody Assunto assunto) {
-        return ResponseEntity.status(201).body(assuntoService.save(assunto));
+    public ResponseEntity<Assunto> create(
+            @Valid @JsonView(AssuntoView.Create.class) @RequestBody AssuntoRecordDto dto
+    ) {
+        return ResponseEntity.status(201).body(assuntoService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Assunto> update(@PathVariable Long id, @Valid @RequestBody Assunto assunto) {
-        return ResponseEntity.ok(assuntoService.update(id, assunto));
+    public ResponseEntity<Assunto> update(
+            @PathVariable Long id,
+            @Valid @JsonView(AssuntoView.Update.class) @RequestBody AssuntoRecordDto dto
+    ) {
+        return ResponseEntity.ok(assuntoService.update(id, dto));
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
