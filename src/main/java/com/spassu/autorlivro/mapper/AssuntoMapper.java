@@ -1,6 +1,7 @@
 package com.spassu.autorlivro.mapper;
 
 import org.springframework.stereotype.Component;
+
 import com.spassu.autorlivro.dto.AssuntoRecordDto;
 import com.spassu.autorlivro.model.Assunto;
 
@@ -19,5 +20,14 @@ public class AssuntoMapper {
         if (dto.descricao() != null) {
             assunto.setDescricao(dto.descricao());
         }
+    }
+    
+    public AssuntoRecordDto toDto(Assunto entity) {
+        if (entity == null) return null;
+
+        return new AssuntoRecordDto(
+                entity.getId(),
+                entity.getDescricao()
+        );
     }
 }

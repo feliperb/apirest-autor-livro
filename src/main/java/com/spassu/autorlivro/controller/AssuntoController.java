@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.spassu.autorlivro.dto.AssuntoRecordDto;
 import com.spassu.autorlivro.dto.AssuntoRecordDto.AssuntoView;
-import com.spassu.autorlivro.model.Assunto;
 import com.spassu.autorlivro.service.AssuntoService;
 
 import jakarta.validation.Valid;
@@ -29,24 +28,24 @@ public class AssuntoController {
     private final AssuntoService assuntoService;
 
     @GetMapping
-    public ResponseEntity<List<Assunto>> getAll() {
+    public ResponseEntity<List<AssuntoRecordDto>> getAll() {
         return ResponseEntity.ok(assuntoService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Assunto> getById(@PathVariable Long id) {
+    public ResponseEntity<AssuntoRecordDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(assuntoService.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Assunto> create(
+    public ResponseEntity<AssuntoRecordDto> create(
             @Valid @JsonView(AssuntoView.Create.class) @RequestBody AssuntoRecordDto dto
     ) {
         return ResponseEntity.status(201).body(assuntoService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Assunto> update(
+    public ResponseEntity<AssuntoRecordDto> update(
             @PathVariable Long id,
             @Valid @JsonView(AssuntoView.Update.class) @RequestBody AssuntoRecordDto dto
     ) {

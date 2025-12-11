@@ -31,14 +31,6 @@ public class LivroService {
                 .toList();
     }
 
-    // --------------------------------------------------
-    // BUSCAR POR ID (DTO)
-    // --------------------------------------------------
-    public LivroRecordDto findDtoById(Long id) {
-        Livro livro = findById(id);
-        return livroMapper.toDto(livro);
-    }
-
 	 // --------------------------------------------------
 	 // BUSCAR POR ID (DTO) — usado pelo Controller
 	 // --------------------------------------------------
@@ -98,7 +90,7 @@ public class LivroService {
     }
     
     
- // --------------------------------------------------
+    // --------------------------------------------------
     // VALIDAÇÕES REGRAS DE NEGÓCIO - Livro
     // --------------------------------------------------
     public void validarLivro(Livro livro, boolean isCreate) {
@@ -129,7 +121,6 @@ public class LivroService {
             throw new BusinessException("Edição muito alta, verifique o valor");
         }
 
-        // Regra de duplicidade apenas no create
         if (isCreate &&
             livroRepository.existsByTituloIgnoreCaseAndAnoPublicacao(
                     livro.getTitulo(), livro.getAnoPublicacao())) {

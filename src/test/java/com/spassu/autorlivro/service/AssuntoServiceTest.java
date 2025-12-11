@@ -36,24 +36,32 @@ class AssuntoServiceTest {
         assuntoService = new AssuntoService(assuntoRepository, mapper);
     }
 
+    
     @Test
-    void findAll_deveRetornarTodosAssuntos() {
+    void findAll_deveRetornarListaDeDto() {
         Assunto a1 = Assunto.builder().id(1L).descricao("Assunto 1").build();
         Assunto a2 = Assunto.builder().id(2L).descricao("Assunto 2").build();
 
         when(assuntoRepository.findAll()).thenReturn(Arrays.asList(a1, a2));
 
-        List<Assunto> result = assuntoService.findAll();
-        assertThat(result).hasSize(2).containsExactly(a1, a2);
+        List<AssuntoRecordDto> result = assuntoService.findAll();
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).id()).isEqualTo(1L);
+        assertThat(result.get(0).descricao()).isEqualTo("Assunto 1");
+        assertThat(result.get(1).id()).isEqualTo(2L);
+        assertThat(result.get(1).descricao()).isEqualTo("Assunto 2");
     }
 
+    
     @Test
     void findById_deveRetornarAssuntoExistente() {
         Assunto a = Assunto.builder().id(1L).descricao("Assunto 1").build();
         when(assuntoRepository.findById(1L)).thenReturn(Optional.of(a));
 
-        Assunto result = assuntoService.findById(1L);
-        assertThat(result.getDescricao()).isEqualTo("Assunto 1");
+        AssuntoRecordDto result = assuntoService.findById(1L);
+
+        assertThat(result.descricao()).isEqualTo("Assunto 1");
     }
 
     @Test
@@ -65,9 +73,12 @@ class AssuntoServiceTest {
                 .hasMessageContaining("Assunto não encontrado");
     }
 
+    
     @Test
-    void create_deveSalvarAssuntoValido() {
-        AssuntoRecordDto dto = new AssuntoRecordDto("Novo Assunto");
+    void create_deveSalvarERetornarDto() {
+        AssuntoRecordDto dto = new AssuntoRecordDto(null, "Novo Assunto");
+
+        when(assuntoRepository.existsByDescricaoIgnoreCase("Novo Assunto")).thenReturn(false);
 
         when(assuntoRepository.save(any(Assunto.class))).thenAnswer(inv -> {
             Assunto saved = inv.getArgument(0);
@@ -75,33 +86,38 @@ class AssuntoServiceTest {
             return saved;
         });
 
-        Assunto result = assuntoService.create(dto);
+        AssuntoRecordDto result = assuntoService.create(dto);
 
-        assertThat(result.getId()).isEqualTo(1L);
-        assertThat(result.getDescricao()).isEqualTo("Novo Assunto");
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.descricao()).isEqualTo("Novo Assunto");
     }
 
     @Test
     void create_deveLancarBusinessExceptionParaDescricaoVazia() {
-        AssuntoRecordDto dto = new AssuntoRecordDto("   ");
+        AssuntoRecordDto dto = new AssuntoRecordDto(null, "   ");
 
         assertThatThrownBy(() -> assuntoService.create(dto))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Descrição do assunto não pode ser vazia");
+                .hasMessageContaining("A descrição do assunto não pode ser vazia");
     }
 
+    
     @Test
     void update_deveAtualizarAssuntoExistente() {
         Assunto existente = Assunto.builder().id(1L).descricao("Antigo").build();
 
         when(assuntoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(assuntoRepository.existsByDescricaoIgnoreCaseAndIdNot("Atualizado", 1L))
+                .thenReturn(false);
+
         when(assuntoRepository.save(any(Assunto.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        AssuntoRecordDto dto = new AssuntoRecordDto("Atualizado");
+        AssuntoRecordDto dto = new AssuntoRecordDto(null, "Atualizado");
 
-        Assunto result = assuntoService.update(1L, dto);
+        AssuntoRecordDto result = assuntoService.update(1L, dto);
 
-        assertThat(result.getDescricao()).isEqualTo("Atualizado");
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.descricao()).isEqualTo("Atualizado");
     }
 
     @Test
@@ -110,13 +126,15 @@ class AssuntoServiceTest {
 
         when(assuntoRepository.findById(1L)).thenReturn(Optional.of(existente));
 
-        AssuntoRecordDto dto = new AssuntoRecordDto("");
+        AssuntoRecordDto dto = new AssuntoRecordDto(1L, "");
 
         assertThatThrownBy(() -> assuntoService.update(1L, dto))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Descrição do assunto não pode ser vazia");
+                .hasMessageContaining("A descrição do assunto não pode ser vazia");
     }
 
+
+    
     @Test
     void delete_deveRemoverAssuntoSemLivros() {
         Assunto a = Assunto.builder().id(1L).livros(List.of()).build();

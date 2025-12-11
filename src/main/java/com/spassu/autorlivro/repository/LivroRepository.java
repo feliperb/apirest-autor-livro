@@ -8,7 +8,6 @@ import com.spassu.autorlivro.model.Livro;
 @Repository
 public interface LivroRepository extends JpaRepository<Livro, Long> {
 
-    // Verifica se já existe um livro com mesmo título e ano
     boolean existsByTituloIgnoreCaseAndAnoPublicacao(String titulo, String anoPublicacao);
 
 }

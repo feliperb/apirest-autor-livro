@@ -50,7 +50,7 @@ public class LivroMapper {
     }
 
     // ---------------------------------------------------
-    // Aplicar atualização em Entity existente (Update)
+    //  DTO → Entity (Update)
     // ---------------------------------------------------
     public void updateEntityFromDto(Livro livro, LivroRecordDto dto) {
 
@@ -82,7 +82,7 @@ public class LivroMapper {
                 .collect(Collectors.toList());
 
         List<AssuntoRecordDto> assuntosDto = livro.getAssuntos().stream()
-                .map(assunto -> new AssuntoRecordDto(assunto.getDescricao()))
+                .map(assunto -> new AssuntoRecordDto(1L, assunto.getDescricao()))
                 .collect(Collectors.toList());
 
         return new LivroRecordDto(

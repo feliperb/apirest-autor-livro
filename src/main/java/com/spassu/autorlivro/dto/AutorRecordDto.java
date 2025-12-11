@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 public record AutorRecordDto(
 		
-		@JsonView({AutorView.Create.class, AutorView.Update.class, AutorView.Response.class})
+		@JsonView(AutorView.Response.class)
         Long id,
 
         @JsonView({AutorView.Create.class, AutorView.Update.class, AutorView.Response.class})
