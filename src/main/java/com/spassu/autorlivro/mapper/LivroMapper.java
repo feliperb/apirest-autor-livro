@@ -57,20 +57,27 @@ public class LivroMapper {
         List<Autor> autores = dto.idsAutores().stream()
                 .map(id -> autorRepository.findById(id)
                         .orElseThrow(() -> new NotFoundException("Autor não encontrado com id: " + id)))
-                .toList();
+                .collect(Collectors.toList()); // lista mutável
 
         List<Assunto> assuntos = dto.idsAssuntos().stream()
                 .map(id -> assuntoRepository.findById(id)
                         .orElseThrow(() -> new NotFoundException("Assunto não encontrado com id: " + id)))
-                .toList();
+                .collect(Collectors.toList()); // lista mutável
 
         livro.setTitulo(dto.titulo());
         livro.setEditora(dto.editora());
         livro.setEdicao(dto.edicao());
         livro.setAnoPublicacao(dto.anoPublicacao());
-        livro.setAutores(autores);
-        livro.setAssuntos(assuntos);
+
+        // Atualiza autores de forma segura
+        livro.getAutores().clear();
+        livro.getAutores().addAll(autores);
+
+        // Atualiza assuntos de forma segura
+        livro.getAssuntos().clear();
+        livro.getAssuntos().addAll(assuntos);
     }
+
 
     // ---------------------------------------------------
     // Entity → DTO (Response)

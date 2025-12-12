@@ -6,7 +6,17 @@ export default function AssuntoList(){
   const [items, setItems] = useState([]);
   useEffect(()=>{ load(); }, []);
   const load = async ()=>{ const r = await getAssuntos(); setItems(r.data); };
-  const del = async (id)=>{ if(!confirm('Excluir?')) return; await deleteAssunto(id); load(); };
+  const del = async (id)=>{
+    if(!confirm('Excluir?')) return;
+    try{
+      await deleteAssunto(id);
+      load();
+    }catch(e){
+      console.error('Erro ao excluir assunto', e);
+      const msg = e?.response?.data?.message || e?.response?.data || e?.message || String(e);
+      alert('Erro ao excluir assunto: ' + msg);
+    }
+  };
   return (
     <div>
       <h1>Assuntos</h1>

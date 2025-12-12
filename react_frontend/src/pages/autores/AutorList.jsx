@@ -41,8 +41,14 @@ export default function AutorList(){
 
   const handleDelete = async (id) => {
     if(!confirm('Excluir?')) return;
-    await deleteAutor(id);
-    load();
+    try{
+      await deleteAutor(id);
+      load();
+    }catch(e){
+      console.error('Erro ao excluir autor', e);
+      const msg = e?.response?.data?.message || e?.response?.data || e?.message || String(e);
+      alert('Erro ao excluir autor: ' + msg);
+    }
   };
 
   return (
