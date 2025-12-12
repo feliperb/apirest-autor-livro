@@ -13,9 +13,11 @@ import com.spassu.autorlivro.model.Livro;
 import com.spassu.autorlivro.repository.LivroRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LivroService {
 
     private final LivroRepository livroRepository;
@@ -25,19 +27,24 @@ public class LivroService {
     // LISTAR TODOS
     // --------------------------------------------------
     public List<LivroRecordDto> findAll() {
-        return livroRepository.findAll()
+        log.info("[LIVRO] Buscando todos os livros");
+        List<LivroRecordDto> livros = livroRepository.findAll()
                 .stream()
                 .map(livroMapper::toDto)
                 .toList();
+        log.info("[LIVRO] {} livros encontrados", livros.size());
+        return livros;
     }
 
 	 // --------------------------------------------------
 	 // BUSCAR POR ID (DTO) — usado pelo Controller
 	 // --------------------------------------------------
-	 public LivroRecordDto findByIdDto(Long id) {
-	     Livro livro = findById(id);
-	     return livroMapper.toDto(livro);
-	 }
+    public LivroRecordDto findByIdDto(Long id) {
+        log.info("[LIVRO] Buscando livro DTO por ID {}", id);
+        Livro livro = findById(id);
+        log.info("[LIVRO] Livro encontrado: {}", livro.getTitulo());
+        return livroMapper.toDto(livro);
+    }
  
     // --------------------------------------------------
     // BUSCAR POR ID (ENTITY) - uso interno
@@ -51,7 +58,10 @@ public class LivroService {
     // CRIAR
     // --------------------------------------------------
     public LivroRecordDto create(LivroRecordDto dto) {
+        log.info("[LIVRO] Criando novo livro");
+        
         if (dto == null) {
+            log.error("[LIVRO] DTO nulo no create");
             throw new BusinessException("Dados do livro não podem ser nulos");
         }
 
@@ -60,6 +70,7 @@ public class LivroService {
 
         livroRepository.save(livro);
 
+        log.info("[LIVRO] Livro criado com sucesso: {}", livro.getTitulo());
         return livroMapper.toDto(livro);
     }
 
@@ -67,7 +78,10 @@ public class LivroService {
     // ATUALIZAR
     // --------------------------------------------------
     public LivroRecordDto update(Long id, LivroRecordDto dto) {
+        log.info("[LIVRO] Atualizando livro ID {}", id);
+
         if (dto == null) {
+            log.error("[LIVRO] DTO nulo no update");
             throw new BusinessException("Dados do livro não podem ser nulos");
         }
 
@@ -78,6 +92,7 @@ public class LivroService {
 
         livroRepository.save(livro);
 
+        log.info("[LIVRO] Livro atualizado com sucesso: {}", livro.getTitulo());
         return livroMapper.toDto(livro);
     }
 
@@ -85,8 +100,12 @@ public class LivroService {
     // DELETAR
     // --------------------------------------------------
     public void delete(Long id) {
+        log.info("[LIVRO] Excluindo livro ID {}", id);
+
         Livro livro = findById(id);
         livroRepository.delete(livro);
+
+        log.info("[LIVRO] Livro removido com sucesso: {}", livro.getTitulo());
     }
     
     

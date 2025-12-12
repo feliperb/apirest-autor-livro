@@ -25,11 +25,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/livros")
 @RequiredArgsConstructor
 @Tag(name = "Livros", description = "Endpoints para gerenciamento de livros")
+@Slf4j
 public class LivroController {
 
     private final LivroService livroService;
@@ -46,6 +48,7 @@ public class LivroController {
     )
     @GetMapping
     public ResponseEntity<List<LivroRecordDto>> getAll() {
+    	log.info("[LIVROS][GET] Listando todos os livros");
         return ResponseEntity.ok(livroService.findAll());
     }
 
@@ -66,6 +69,7 @@ public class LivroController {
     )
     @GetMapping("/{id}")
     public ResponseEntity<LivroRecordDto> getById(@PathVariable Long id) {
+    	log.info("[LIVROS][GET] Buscando livro por ID: {}", id);
         return ResponseEntity.ok(livroService.findByIdDto(id));
     }
 
@@ -91,7 +95,9 @@ public class LivroController {
             )
             @RequestBody LivroRecordDto dto
     ) {
-        LivroRecordDto salvo = livroService.create(dto);
+    	 log.info("[LIVROS][POST] Criando livro: {}", dto);
+         LivroRecordDto salvo = livroService.create(dto);
+         log.info("[LIVROS][POST] Livro criado com ID: {}", salvo.id());
         return ResponseEntity.status(201).body(salvo);
     }
 
@@ -121,7 +127,9 @@ public class LivroController {
             )
             @RequestBody LivroRecordDto dto
     ) {
+    	log.info("[LIVROS][PUT] Atualizando livro ID {}: novos dados {}", id, dto);
         LivroRecordDto atualizado = livroService.update(id, dto);
+        log.info("[LIVROS][PUT] Livro ID {} atualizado com sucesso", id);
         return ResponseEntity.ok(atualizado);
     }
 
@@ -142,7 +150,9 @@ public class LivroController {
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+    	log.info("[LIVROS][DELETE] Deletando livro ID {}", id);
         livroService.delete(id);
+        log.info("[LIVROS][DELETE] Livro ID {} deletado com sucesso", id);
         return ResponseEntity.noContent().build();
     }
 }

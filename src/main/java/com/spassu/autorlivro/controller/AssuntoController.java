@@ -23,11 +23,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/assuntos")
 @RequiredArgsConstructor
 @Tag(name = "Assuntos", description = "Endpoints para gerenciamento de assuntos")
+@Slf4j
 public class AssuntoController {
 
     private final AssuntoService assuntoService;
@@ -39,7 +41,10 @@ public class AssuntoController {
     )
     @ApiResponse(responseCode = "200", description = "Lista obtida com sucesso")
     public ResponseEntity<List<AssuntoRecordDto>> getAll() {
-        return ResponseEntity.ok(assuntoService.findAll());
+    	log.info("[ASSUNTOS][GET] Listando todos os assuntos");
+        List<AssuntoRecordDto> assuntos = assuntoService.findAll();
+        log.info("[ASSUNTOS][GET] {} assuntos encontrados", assuntos.size());
+        return ResponseEntity.ok(assuntos);
     }
 
     @GetMapping("/{id}")
@@ -53,7 +58,10 @@ public class AssuntoController {
             @Parameter(description = "ID do assunto", example = "1")
             @PathVariable Long id
     ) {
-        return ResponseEntity.ok(assuntoService.findById(id));
+    	log.info("[ASSUNTOS][GET] Buscando assunto por ID: {}", id);
+        AssuntoRecordDto dto = assuntoService.findById(id);
+        log.info("[ASSUNTOS][GET] Assunto ID {} encontrado", id);
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping
@@ -68,7 +76,10 @@ public class AssuntoController {
             @JsonView(AssuntoView.Create.class)
             @RequestBody AssuntoRecordDto dto
     ) {
-        return ResponseEntity.status(201).body(assuntoService.create(dto));
+    	log.info("[ASSUNTOS][POST] Criando assunto: {}", dto);
+        AssuntoRecordDto novo = assuntoService.create(dto);
+        log.info("[ASSUNTOS][POST] Assunto criado com ID: {}", novo.id());
+        return ResponseEntity.status(201).body(novo);
     }
 
     @PutMapping("/{id}")
@@ -87,7 +98,10 @@ public class AssuntoController {
             @JsonView(AssuntoView.Update.class)
             @RequestBody AssuntoRecordDto dto
     ) {
-        return ResponseEntity.ok(assuntoService.update(id, dto));
+    	log.info("[ASSUNTOS][PUT] Atualizando assunto ID {}: novos dados {}", id, dto);
+        AssuntoRecordDto atualizado = assuntoService.update(id, dto);
+        log.info("[ASSUNTOS][PUT] Assunto ID {} atualizado com sucesso", id);
+        return ResponseEntity.ok(atualizado);
     }
 
     @DeleteMapping("/{id}")
@@ -102,7 +116,9 @@ public class AssuntoController {
             @Parameter(description = "ID do assunto", example = "1")
             @PathVariable Long id
     ) {
+    	log.info("[ASSUNTOS][DELETE] Deletando assunto ID {}", id);
         assuntoService.delete(id);
+        log.info("[ASSUNTOS][DELETE] Assunto ID {} deletado com sucesso", id);
         return ResponseEntity.noContent().build();
     }
 }

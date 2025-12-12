@@ -23,11 +23,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/autores")
 @RequiredArgsConstructor
 @Tag(name = "Autores", description = "Endpoints para gerenciamento de autores")
+@Slf4j
 public class AutorController {
 
     private final AutorService autorService;
@@ -39,22 +41,19 @@ public class AutorController {
     )
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     public ResponseEntity<List<AutorRecordDto>> getAll() {
+    	log.info("[AUTORES][GET] Listando todos os autores");
         return ResponseEntity.ok(autorService.findAll());
     }
 
 
-    @GetMapping("/{id}")
-    @Operation(
-        summary = "Buscar autor por ID",
-        description = "Retorna os dados de um autor específico pelo seu ID"
-    )
-    @ApiResponse(responseCode = "200", description = "Autor encontrado")
-    @ApiResponse(responseCode = "404", description = "Autor não encontrado")
     public ResponseEntity<AutorRecordDto> getById(
             @Parameter(description = "ID do autor", example = "1")
             @PathVariable Long id
     ) {
-        return ResponseEntity.ok(autorService.findByIdDto(id));
+        log.info("[AUTORES][GET] Buscando autor por ID {}", id);
+        AutorRecordDto autor = autorService.findByIdDto(id);
+        log.info("[AUTORES][GET] Autor encontrado: {}", autor);
+        return ResponseEntity.ok(autor);
     }
 
 
@@ -71,7 +70,9 @@ public class AutorController {
             @JsonView(AutorView.Create.class)
             AutorRecordDto dto
     ) {
+    	log.info("[AUTORES][POST] Criando autor: {}", dto);
         AutorRecordDto novoAutor = autorService.create(dto);
+        log.info("[AUTORES][POST] Autor criado com ID {}", novoAutor.id());
         return ResponseEntity.status(201).body(novoAutor);
     }
 
@@ -93,7 +94,9 @@ public class AutorController {
             @JsonView(AutorView.Update.class)
             AutorRecordDto dto
     ) {
+    	log.info("[AUTORES][PUT] Atualizando autor ID {} com dados {}", id, dto);
         AutorRecordDto autorAtualizado = autorService.update(id, dto);
+        log.info("[AUTORES][PUT] Autor ID {} atualizado com sucesso", id);
         return ResponseEntity.ok(autorAtualizado);
     }
 
@@ -109,7 +112,9 @@ public class AutorController {
             @Parameter(description = "ID do autor", example = "1")
             @PathVariable Long id
     ) {
+    	log.info("[AUTORES][DELETE] Removendo autor ID {}", id);
         autorService.delete(id);
+        log.info("[AUTORES][DELETE] Autor ID {} removido com sucesso", id);
         return ResponseEntity.noContent().build();
     }
 }
