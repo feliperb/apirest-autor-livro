@@ -10,6 +10,7 @@ import com.spassu.autorlivro.exception.BusinessException;
 import com.spassu.autorlivro.exception.NotFoundException;
 import com.spassu.autorlivro.mapper.AssuntoMapper;
 import com.spassu.autorlivro.model.Assunto;
+import com.spassu.autorlivro.model.Livro;
 import com.spassu.autorlivro.repository.AssuntoRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -113,6 +114,7 @@ public class AssuntoService {
     // --------------------------------------------------
     public void delete(Long id) {
     	log.info("[ASSUNTOS][SERVICE][DELETE] Deletando assunto ID {}", id);
+    	
     	if (id == null)
             throw new BusinessException("O ID do assunto não pode ser nulo");
 
@@ -123,9 +125,12 @@ public class AssuntoService {
                 });
 
     	if (!assunto.getLivros().isEmpty()) {
-            log.warn("[ASSUNTOS][SERVICE][DELETE] Assunto ID {} possui livros associados. Não é possível deletar.", id);
-            throw new BusinessException("Não é possível deletar um assunto que possui livros associados");
-        }
+    	    log.warn("[ASSUNTOS][SERVICE][DELETE] Assunto ID {} possui {} livros associados.",
+    	             id,
+    	             assunto.getLivros().size());
+    	    throw new BusinessException("Não é possível deletar um assunto que possui livros associados");
+    	}
+
 
         repository.delete(assunto);
         log.info("[ASSUNTOS][SERVICE][DELETE] Assunto ID {} deletado com sucesso", id);
