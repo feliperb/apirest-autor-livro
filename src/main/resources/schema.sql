@@ -47,3 +47,28 @@ CREATE TABLE livro_assunto (
     CONSTRAINT fk_livroassunto_assunto FOREIGN KEY (id_assunto) REFERENCES assunto(id)
 );
 
+
+-- VIEW DE RELATORIO
+CREATE OR REPLACE VIEW vw_relatorio_geral AS
+SELECT
+    a.id AS autor_id,
+    a.nome AS autor_nome,
+
+    l.id AS livro_id,
+    l.titulo AS livro_titulo,
+    l.editora AS livro_editora,
+    l.edicao AS livro_edicao,
+    l.ano_publicacao AS livro_ano_publicacao,
+
+    s.id AS assunto_id,
+    s.descricao AS assunto_descricao
+
+FROM autor a
+JOIN livro_autor la ON la.id_autor = a.id
+JOIN livro l ON l.id = la.id_livro
+LEFT JOIN livro_assunto ls ON ls.id_livro = l.id
+LEFT JOIN assunto s ON s.id = ls.id_assunto
+
+ORDER BY a.nome, l.titulo, s.descricao;
+
+
